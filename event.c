@@ -390,6 +390,9 @@ static void event_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 void php_event_callback_handler(int fd, short ev, void *arg)
 {
 	php_event *event = (php_event*)arg;
+#ifdef ZTS
+	TSRMLS_D = event->TSRMLS_C;
+#endif
 	zval **params[3];
 	zval *retval = NULL;
 	//zval *z_stream;
@@ -618,7 +621,7 @@ void php_callback_handler(struct evhttp_request *req, void *arg)
     zval *retval = NULL;
     zval **params[1];
     zval *req_resource;
-    cb = (zval*)arg;
+    cb = ((evhttp_callback_arg *)arg)->arg;
     int res;
     struct evbuffer *buf;
     evhttp_response *response;
@@ -627,6 +630,10 @@ void php_callback_handler(struct evhttp_request *req, void *arg)
     int res_id; 
     void *retval_res;
     int retval_res_type;
+#ifdef ZTS
+	TSRMLS_D = ((evhttp_callback_arg *) arg)->TSRMLS_C;
+#endif
+
 
     /* pass the request as a php resource */
     MAKE_STD_ZVAL(req_resource);
@@ -732,6 +739,7 @@ PHP_FUNCTION(evhttp_set_gencb)
     zval *res_httpd, *php_cb;
     zval *cb;
     char *callable = NULL;
+	evhttp_callback_arg *cb_arg = (evhttp_callback_arg *) emalloc(sizeof(evhttp_callback_arg));
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rz", &res_httpd, &php_cb) == FAILURE)
     {
@@ -1083,6 +1091,9 @@ PHP_FUNCTION(evbuffer_readline)
 void callback_buffered_on_read(struct bufferevent *bev, void *arg)
 {
 	php_bufferevent *event = (php_bufferevent*)arg;
+#ifdef ZTS
+	TSRMLS_D = event->TSRMLS_C;
+#endif
 	zval **params[1];
 	zval *retval = NULL;
  	
@@ -1107,6 +1118,9 @@ void callback_buffered_on_read(struct bufferevent *bev, void *arg)
 void callback_buffered_on_write(struct bufferevent *bev, void *arg)
 {
 	php_bufferevent *event = (php_bufferevent*)arg;
+#ifdef ZTS
+	TSRMLS_D = event->TSRMLS_C;
+#endif
 	zval **params[1];
 	zval *retval = NULL;
  	
@@ -1131,6 +1145,9 @@ void callback_buffered_on_write(struct bufferevent *bev, void *arg)
 void callback_buffered_on_error(struct bufferevent *bev, short what, void *arg)
 {
 	php_bufferevent *event = (php_bufferevent*)arg;
+#ifdef ZTS
+	TSRMLS_D = event->TSRMLS_C;
+#endif
 	zval **params[3];
 	zval *code;
 	zval *retval = NULL;
@@ -1483,6 +1500,9 @@ PHP_FUNCTION(evhttp_connection_new)
 void callback_connection_on_close(struct evhttp_connection *con, void *arg)
 {
 	php_httpcon *connection = (php_httpcon*)arg;
+#ifdef ZTS
+	TSRMLS_D = connection->TSRMLS_C;
+#endif
 	zval **params[1];
 	zval *retval = NULL;
  	
@@ -1565,6 +1585,9 @@ PHP_FUNCTION(evhttp_connection_set_closecb)
 void callback_request_on_complete(struct evhttp_request *req, void *arg)
 {
 	php_httpevent *event = (php_httpevent*)arg;
+#ifdef ZTS
+	TSRMLS_D = event->TSRMLS_C;
+#endif
 	zval **params[1];
 	zval *retval = NULL;
  	

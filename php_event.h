@@ -190,6 +190,9 @@ typedef struct _php_event
 	zval *cb;
 	zval *flags;
 	zval *event;
+#ifdef ZTS
+	TSRMLS_D;
+#endif
 } php_event;
 
 /*
@@ -202,6 +205,9 @@ typedef struct _php_bufferevent
 	zval *r_cb;
 	zval *w_cb;
 	zval *e_cb;
+#ifdef ZTS
+	TSRMLS_D;
+#endif
 } php_bufferevent;
 
 /*
@@ -211,6 +217,9 @@ typedef struct _php_httpevent
 {
 	zval *res_httpevent;
 	zval *r_cb;
+#ifdef ZTS
+	TSRMLS_D;
+#endif
 } php_httpevent;
 
 /*
@@ -220,6 +229,9 @@ typedef struct _php_httpcon
 {
 	zval *res_httpcon;
 	zval *c_cb;
+#ifdef ZTS
+	TSRMLS_D;
+#endif
 } php_httpcon;
 
 /*
@@ -233,7 +245,18 @@ typedef struct _evhttp_response
 	char* res_message;
 	char* res_body;
 	int res_body_len;
+#ifdef ZTS
+	TSRMLS_D;
+#endif
 } evhttp_response;
+
+typedef struct _evhttp_callback_arg
+{
+	zval *arg;
+#ifdef ZTS
+	TSRMLS_D;
+#endif
+} evhttp_callback_arg;
 
 #endif	/* PHP_EVENT_H */
 
