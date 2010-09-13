@@ -31,6 +31,14 @@
 #ifndef PHP_EVENT_H
 #define PHP_EVENT_H
 
+#ifndef TRUE
+#define TRUE 1
+#endif
+
+#ifndef FALSE
+#define FALSE 0
+#endif
+
 extern zend_module_entry event_module_entry;
 #define phpext_event_ptr &event_module_entry
 
@@ -77,7 +85,7 @@ PHP_FUNCTION(evhttp_make_request);
 /*
  * HTTP Request functions
  */
-PHP_FUNCTION(evhttp_request_uri);
+PHP_FUNCTION(evhttp_request_get_uri);
 PHP_FUNCTION(evhttp_request_method);
 PHP_FUNCTION(evhttp_request_body);
 PHP_FUNCTION(evhttp_request_input_buffer);

@@ -103,8 +103,8 @@ zend_function_entry event_functions[] = {
     PHP_FE(evhttp_request_new, NULL)
     PHP_FE(evhttp_request_free, NULL)
     PHP_FE(evhttp_make_request, NULL)
-    PHP_FE(evhttp_set_gencb, NULL)
-    PHP_FE(evhttp_request_uri, NULL)
+	PHP_FE(evhttp_set_gencb, NULL) 
+    PHP_FE(evhttp_request_get_uri, NULL)
     PHP_FE(evhttp_request_method, NULL)
     PHP_FE(evhttp_request_body, NULL)
     PHP_FE(evhttp_request_append_body, NULL)
@@ -749,15 +749,18 @@ PHP_FUNCTION(evhttp_set_gencb)
     }
 #endif
     
-    MAKE_STD_ZVAL(cb);
-    *(cb) = *php_cb;
-    zval_copy_ctor(cb);  
+    MAKE_STD_ZVAL(cb_arg->arg);
+    *(cb_arg->arg) = *php_cb;
+    zval_copy_ctor(cb_arg->arg);  
+#ifdef ZTS
+	cb_arg->TSRMLS_C = TSRMLS_C;
+#endif
 
-    evhttp_set_gencb(httpd, php_callback_handler, (void*)cb);
+    evhttp_set_gencb(httpd, php_callback_handler, (void *)cb_arg);
 }
 
 
-PHP_FUNCTION(evhttp_request_uri)
+PHP_FUNCTION(evhttp_request_get_uri)
 {
     struct evhttp_request *req;
     zval *res_req;
@@ -771,7 +774,7 @@ PHP_FUNCTION(evhttp_request_uri)
     }
 
     ZEND_FETCH_RESOURCE(req, struct evhttp_request*, &res_req, -1, PHP_EVHTTP_REQUEST_RES_NAME, le_evhttp_request);
-    uri = evhttp_request_uri(req);
+    uri = evhttp_request_get_uri(req);
     
     ZVAL_STRING(return_value, (char*)uri, 1);
     return; 
@@ -943,7 +946,7 @@ PHP_FUNCTION(evhttp_request_body)
 {
     struct evhttp_request *req;
     zval *res_req;
-    int body_len;
+    int body_len, status;
     char *body;
 
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &res_req) == FAILURE)
@@ -953,15 +956,20 @@ PHP_FUNCTION(evhttp_request_body)
     }
     
     ZEND_FETCH_RESOURCE(req, struct evhttp_request*, &res_req, -1, PHP_EVHTTP_REQUEST_RES_NAME, le_evhttp_request);
+
+	body_len = evbuffer_get_length(req->input_buffer);
     
-    if (req->input_buffer == NULL || req->input_buffer->buffer == NULL || req->input_buffer->totallen == 0)
+    if (req->input_buffer == NULL || body_len == 0)
     {
     	RETURN_FALSE;
     }
     
-    body = emalloc(req->input_buffer->off+1);
-    memcpy(body, req->input_buffer->buffer, req->input_buffer->off+1);
-    body[req->input_buffer->off] = 0;
+    body = emalloc(body_len + 1);
+    status = evbuffer_remove(req->input_buffer, (void *) body, body_len + 1);
+	if (status == -1) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not get data from resource");
+		RETURN_FALSE;
+	}
     
     ZVAL_STRING(return_value, body, 0);
 }   
