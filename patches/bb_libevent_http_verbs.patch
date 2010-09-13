@@ -1,0 +1,67 @@
+*** evhttp.h.orig	2009-02-04 15:55:14.000000000 -0500
+--- evhttp.h	2009-02-04 15:58:52.000000000 -0500
+***************
+*** 176,183 ****
+  /*
+   * Interfaces for making requests
+   */
+! enum evhttp_cmd_type { EVHTTP_REQ_GET, EVHTTP_REQ_POST, EVHTTP_REQ_HEAD };
+! 
+  enum evhttp_request_kind { EVHTTP_REQUEST, EVHTTP_RESPONSE };
+  
+  /**
+--- 176,184 ----
+  /*
+   * Interfaces for making requests
+   */
+! enum evhttp_cmd_type { EVHTTP_REQ_GET, EVHTTP_REQ_POST, EVHTTP_REQ_HEAD,
+! 					   EVHTTP_REQ_OPTIONS, EVHTTP_REQ_PUT, EVHTTP_REQ_DELETE,
+! 					   EVHTTP_REQ_TRACE, EVHTTP_REQ_CONNECT };
+  enum evhttp_request_kind { EVHTTP_REQUEST, EVHTTP_RESPONSE };
+  
+  /**
+*** http.c.orig	2008-12-19 17:27:27.000000000 -0500
+--- http.c	2009-02-04 16:20:43.000000000 -0500
+***************
+*** 308,313 ****
+--- 308,328 ----
+  	case EVHTTP_REQ_HEAD:
+  		method = "HEAD";
+  		break;
++ 	case EVHTTP_REQ_PUT:
++ 		method = "PUT";
++ 		break;
++ 	case EVHTTP_REQ_DELETE:
++ 		method = "DELETE";
++ 		break;
++ 	case EVHTTP_REQ_OPTIONS:
++ 		method = "OPTIONS";
++ 		break;
++ 	case EVHTTP_REQ_TRACE:
++ 		method = "TRACE";
++ 		break;
++ 	case EVHTTP_REQ_CONNECT:
++ 		method = "CONNECT";
++ 		break;
+  	default:
+  		method = NULL;
+  		break;
+***************
+*** 1272,1277 ****
+--- 1287,1302 ----
+  		req->type = EVHTTP_REQ_POST;
+  	} else if (strcmp(method, "HEAD") == 0) {
+  		req->type = EVHTTP_REQ_HEAD;
++ 	} else if (strcmp(method, "PUT") == 0) {
++ 		req->type = EVHTTP_REQ_PUT;
++ 	} else if (strcmp(method, "DELETE") == 0) {
++ 		req->type = EVHTTP_REQ_DELETE;
++ 	} else if (strcmp(method, "OPTIONS") == 0) {
++ 		req->type = EVHTTP_REQ_OPTIONS;
++ 	} else if (strcmp(method, "TRACE") == 0) {
++ 		req->type = EVHTTP_REQ_TRACE;
++ 	} else if (strcmp(method, "CONNECT") == 0) {
++ 		req->type = EVHTTP_REQ_CONNECT;
+  	} else {
+  		event_debug(("%s: bad method %s on request %p from %s",
+  			__func__, method, req, req->remote_host));

@@ -1,0 +1,29 @@
+<html>
+<head></head>
+<body>
+	<style>
+	    form
+	    {
+	        width:  600px;
+	        height: 400px;
+			margin-top: 50px;
+			margin-left: auto;
+			margin-right: auto;
+	    }
+
+	</style>
+<br /><br />
+<h1>Current Polls</h1>
+
+<?php foreach ($this->polls as $id => $poll) { ?>
+	<h2><?php echo $poll['question'];?></h2>
+	<ol type="a">
+<?php foreach ($poll['options'] as $option) { ?>		
+		<li value="<?php echo $option['key']?>"><?php echo $option['text']?></li>
+<?php } ?>
+	</ol>
+	
+<?php } ?>
+
+</body>
+</html>
