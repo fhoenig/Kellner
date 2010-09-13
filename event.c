@@ -812,12 +812,12 @@ PHP_FUNCTION(evhttp_request_method)
                         RETURN_STRING("PUT", 1);
                 case EVHTTP_REQ_DELETE:
                         RETURN_STRING("DELETE", 1);
-                case EVHTTP_REQ_OPTIONS:
+/*                case EVHTTP_REQ_OPTIONS:
                         RETURN_STRING("OPTIONS", 1);
                 case EVHTTP_REQ_TRACE:
                         RETURN_STRING("TRACE", 1);
                 case EVHTTP_REQ_CONNECT:
-                        RETURN_STRING("CONNECT", 1);
+                        RETURN_STRING("CONNECT", 1); */
                 default:
                         RETURN_NULL();
         }
