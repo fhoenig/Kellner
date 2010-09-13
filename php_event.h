@@ -52,6 +52,20 @@ extern zend_module_entry event_module_entry;
 #include "TSRM.h"
 #endif
 
+/* refcount macros */
+#ifndef Z_ADDREF_P
+#define Z_ADDREF_P(pz)                (pz)->refcount++
+#endif
+
+#ifndef Z_DELREF_P
+#define Z_DELREF_P(pz)                (pz)->refcount--
+#endif
+
+#ifndef Z_SET_REFCOUNT_P
+#define Z_SET_REFCOUNT_P(pz, rc)      (pz)->refcount = rc
+#endif
+
+
 PHP_MINIT_FUNCTION(event);
 PHP_MSHUTDOWN_FUNCTION(event);
 PHP_RINIT_FUNCTION(event);

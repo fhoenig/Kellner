@@ -483,7 +483,7 @@ PHP_FUNCTION(event_set)
     event_args = (php_event*)malloc(sizeof(php_event));
     
     event_args->cb = z_cb;
-    ZVAL_ADDREF(event_args->cb);
+    Z_ADDREF_P(event_args->cb);
     
     MAKE_STD_ZVAL(event_args->flags);
     ZVAL_LONG(event_args->flags, event_flags);
@@ -860,7 +860,7 @@ PHP_FUNCTION(evhttp_request_headers)
 	
     TAILQ_FOREACH (header, q, next)
 	{
-		add_assoc_string(return_value, header->key, header->value, true);
+		add_assoc_string(return_value, header->key, header->value, TRUE);
 	}
     return; 
 }
@@ -1224,23 +1224,23 @@ PHP_FUNCTION(bufferevent_new)
     be->r_cb = z_rcb;
     be->w_cb = z_wcb;
     be->e_cb = z_ecb;
-    ZVAL_ADDREF(be->r_cb);
-    ZVAL_ADDREF(be->w_cb);
-    ZVAL_ADDREF(be->e_cb);
+    Z_ADDREF_P(be->r_cb);
+    Z_ADDREF_P(be->w_cb);
+    Z_ADDREF_P(be->e_cb);
 
     /* call libevent */
     if (NULL == (e = bufferevent_new(fd, callback_buffered_on_read, callback_buffered_on_write, callback_buffered_on_error, be)))
     {
-        ZVAL_DELREF(be->r_cb);
-        ZVAL_DELREF(be->w_cb);
-        ZVAL_DELREF(be->e_cb);
+        Z_DELREF_P(be->r_cb);
+        Z_DELREF_P(be->w_cb);
+        Z_DELREF_P(be->e_cb);
     	free(be);
     	php_error_docref(NULL TSRMLS_CC, E_ERROR, "Could not create bufferevent");
     	RETURN_FALSE;
     }
     
     be->stream = z_stream;
-    ZVAL_ADDREF(be->stream);
+    Z_ADDREF_P(be->stream);
     
     MAKE_STD_ZVAL(be->res_bufferevent);
     ZEND_REGISTER_RESOURCE(be->res_bufferevent, e, le_bufferevent);
@@ -1548,9 +1548,9 @@ PHP_FUNCTION(evhttp_connection_set_closecb)
     
     /* make struct with all callback functions, stream and the event resource */
     hc->c_cb = z_ccb;
-    ZVAL_ADDREF(hc->c_cb);
+    Z_ADDREF_P(hc->c_cb);
     hc->res_httpcon = con_res;
-    ZVAL_ADDREF(hc->res_httpcon);
+    Z_ADDREF_P(hc->res_httpcon);
     
     /* call libevent */
     evhttp_connection_set_closecb(c, callback_connection_on_close, hc);
@@ -1615,12 +1615,12 @@ PHP_FUNCTION(evhttp_request_new)
     
     /* make struct with all callback functions, stream and the event resource */
     he->r_cb = z_rcb;
-    ZVAL_ADDREF(he->r_cb);
+    Z_ADDREF_P(he->r_cb);
 
     /* call libevent */
     if (NULL == (r = evhttp_request_new(callback_request_on_complete, he)))
     {
-        ZVAL_DELREF(he->r_cb);
+        Z_DELREF_P(he->r_cb);
     	free(he);
     	php_error_docref(NULL TSRMLS_CC, E_ERROR, "Could not create httpevent");
     	RETURN_FALSE;
@@ -1664,7 +1664,7 @@ PHP_FUNCTION(evhttp_make_request)
     }
 
 	zend_list_addref(Z_RESVAL_P(req_res));
-	//ZVAL_ADDREF(req_res);
+	//Z_ADDREF_P(req_res);
 	
     ret = evhttp_make_request(con, req, type, url);
 	//php_printf("%d, %s, %d\n", type, url, ret);
