@@ -1,1 +1,65 @@
-Please patch libevent-1.4.9 with the patch in patches/
+
+About
+
+Kargo-Event is a solution to scale high-frequency API-type HTTP traffic, using a new methodology for PHP network programming, centered around a libevent extension.
+Motivation
+
+Web traffic has gone a long way from simply serving HTML pages and image files and is now much more often a transport layer for remote procedure calls (AJAX, REST, SOAP,...). And this not just for public web services, but also often used as a communication method between the layers of a multi-tierd enterprise architecture.
+
+We have found that current web application/server solutions are sometimes quite inadequate for handling this kind of traffic under high loads, and usually a broad set of optimizations and workarounds are required to gain scalability (in-memory caching, op-code caches, etc).
+Proposal
+
+How about skipping things like "installing the latest web server" or "let's implement memcached" or "have you tried an op-code cache" and writing a super scalable api server in PHP with very few lines of code? (no web server required)
+Examples
+
+Check out the code for the kargo-event php extension. Examples are found in the demo directory.
+
+demos
+|-- library  <-some patched ZF classes 
+|-- misc  <-basic network programming example to play with
+|   |-- bufferbot.php
+|   |-- bufferevent.php
+|   |-- chatserver.php
+|   |-- httpclient.php
+|   |-- httpdtest.php
+|   `-- simple_client.php
+|-- zf      <-Zend Framework MVC app demo
+`-- zf-apiserver  <- Zend Framework Api demo server (JSON-RPC and XML-RPC)
+
+ZF App Demo
+
+This is a highly experimental sample poll application. It uses evhttp as an integrated webserver, serving a persistent Zend Framework MVC application. Performance and scalability is pretty interesting, but security concerns might result in heart attacks. So play with it, but don't use this anywhere in a production environment. (It's also work in progress)
+
+To start: Make sure you have your Zend Framework copy linked correctly as /library/Zend.
+
+> cd demos/zf/bin
+> php main.php
+
+To test: Point your web browser to: http://127.0.0.1:8080/ Note that the app is not meaningful yet. Feel free to play and extend it.
+ZF API Server Demo
+
+A more stable and useful example can be found in demos/zf-apiserver. It exports a basic poll service class as JSON-RPC and XML-RPC. Soap could be added pretty easily.
+
+We found that without the front controller Zend Framework components work amazingly well with long running PHP processes. Have fun playing and load testing.
+
+To start: Make sure you have your Zend Framework copy linked correctly as /library/Zend.
+
+> cd demos/zf-apiserver/bin
+> php main.php
+
+To test, in a new shell type:
+
+> cd demo/zf-apiserver/bin
+> php test.php
+
+Benchmarks
+
+Coming soon...
+Contribute
+
+The current state of the project presents an interesting, new way of building php applications. If you're as excited about this the same way that we are, please check out a copy of the code and start playing with it. Feedback and contributions are more than welcome!
+
+Best,
+
+Florian
+
