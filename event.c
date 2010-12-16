@@ -325,16 +325,6 @@ static void evhttp_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
  */
 static void evhttp_request_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 {
-	struct evhttp_request *r = (struct evhttp_request*)rsrc->ptr;
-	if (r->cb_arg != NULL)
-   	{
-        //         zval_dtor(((php_httpevent*)(r->cb_arg))->r_cb);
-        // FREE_ZVAL(((php_httpevent*)(r->cb_arg))->r_cb);
-        // FREE_ZVAL(((php_httpevent*)(r->cb_arg))->res_httpevent);
-        // free(r->cb_arg);
-   	}
-	//php_printf("FFOO|\n");
-    //evhttp_request_free(r);
 }
 
 /*
