@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2009, Kargo Global Inc. 
+* Copyright (c) 2009, Kargo Global Inc.
 * All rights reserved.
 *
 * Redistribution and use in source and binary forms, with or without
@@ -61,7 +61,7 @@ static int le_bufferevent;
 static int le_evhttp_connection;
 static int le_evhttp_response;
 
-static struct event_base *current_base; 
+static struct event_base *current_base;
 
 /* Forward declarations */
 static void event_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC);
@@ -95,7 +95,7 @@ zend_function_entry event_functions[] = {
     PHP_FE(event_set, NULL)
     PHP_FE(event_add, NULL)
     PHP_FE(event_del, NULL)
-    PHP_FE(event_dispatch, NULL) 
+    PHP_FE(event_dispatch, NULL)
     PHP_FE(event_loopbreak, NULL)
     PHP_FE(evhttp_start, NULL)
     PHP_FE(evhttp_connection_new, NULL)
@@ -103,7 +103,7 @@ zend_function_entry event_functions[] = {
     PHP_FE(evhttp_request_new, NULL)
     PHP_FE(evhttp_request_free, NULL)
     PHP_FE(evhttp_make_request, NULL)
-	PHP_FE(evhttp_set_gencb, NULL) 
+	PHP_FE(evhttp_set_gencb, NULL)
     PHP_FE(evhttp_request_get_uri, NULL)
     PHP_FE(evhttp_request_method, NULL)
     PHP_FE(evhttp_request_body, NULL)
@@ -182,10 +182,10 @@ static void php_event_init_globals(zend_event_globals *event_globals)
  */
 PHP_MINIT_FUNCTION(event)
 {
-	/* If you have INI entries, uncomment these lines 
+	/* If you have INI entries, uncomment these lines
 	REGISTER_INI_ENTRIES();
 	*/
-    
+
 	/* resource types */
 	le_evhttp = zend_register_list_destructors_ex(evhttp_dtor, NULL, PHP_EVHTTP_RES_NAME, module_number);
     le_evhttp_request = zend_register_list_destructors_ex(evhttp_request_dtor, NULL, PHP_EVHTTP_REQUEST_RES_NAME, module_number);
@@ -201,17 +201,17 @@ PHP_MINIT_FUNCTION(event)
     REGISTER_LONG_CONSTANT("EV_TIMEOUT", EV_TIMEOUT, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("EV_SIGNAL", EV_SIGNAL, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("EV_PERSIST", EV_PERSIST, CONST_CS | CONST_PERSISTENT);
-    
+
     REGISTER_LONG_CONSTANT("EVBUFFER_EOF", EVBUFFER_EOF, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("EVBUFFER_ERROR", EVBUFFER_ERROR, CONST_CS | CONST_PERSISTENT);
 
     REGISTER_LONG_CONSTANT("EVHTTP_REQ_GET", EVHTTP_REQ_GET, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("EVHTTP_REQ_POST", EVHTTP_REQ_POST, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("EVHTTP_REQ_HEAD", EVHTTP_REQ_HEAD, CONST_CS | CONST_PERSISTENT);
-    
+
     REGISTER_LONG_CONSTANT("EVHTTP_REQUEST", EVHTTP_REQUEST, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("EVHTTP_RESPONSE", EVHTTP_RESPONSE, CONST_CS | CONST_PERSISTENT);
-    
+
 	return SUCCESS;
 }
 /* }}} */
@@ -276,7 +276,7 @@ PHP_FUNCTION(event_new)
 {
 	struct event *e;
 
-    if (!(e = malloc(sizeof(struct event)))) 
+    if (!(e = malloc(sizeof(struct event))))
     {
         php_error_docref(NULL TSRMLS_CC, E_ERROR, "Could not create event resource");
         RETURN_FALSE;
@@ -293,7 +293,7 @@ static void bufferevent_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 {
     struct bufferevent *e = (struct bufferevent*)rsrc->ptr;
     int i;
-    
+
   	if (e->cbarg != NULL)
    	{
    		zval_dtor(((php_bufferevent*)(e->cbarg))->r_cb);
@@ -328,10 +328,10 @@ static void evhttp_request_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 	struct evhttp_request *r = (struct evhttp_request*)rsrc->ptr;
 	if (r->cb_arg != NULL)
    	{
-   		zval_dtor(((php_httpevent*)(r->cb_arg))->r_cb);
-   		FREE_ZVAL(((php_httpevent*)(r->cb_arg))->r_cb);
-   		FREE_ZVAL(((php_httpevent*)(r->cb_arg))->res_httpevent);
-   		free(r->cb_arg);
+        //         zval_dtor(((php_httpevent*)(r->cb_arg))->r_cb);
+        // FREE_ZVAL(((php_httpevent*)(r->cb_arg))->r_cb);
+        // FREE_ZVAL(((php_httpevent*)(r->cb_arg))->res_httpevent);
+        // free(r->cb_arg);
    	}
 	//php_printf("FFOO|\n");
     //evhttp_request_free(r);
@@ -352,7 +352,7 @@ static void evhttp_response_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 {
     evhttp_response *r = (evhttp_response*)rsrc->ptr;
     free(r->res_message);
-    if (r->res_body_len > 0) 
+    if (r->res_body_len > 0)
     {
         free(r->res_body);
     }
@@ -367,7 +367,7 @@ static void event_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
 {
     struct event *e = (struct event*)rsrc->ptr;
     int i;
-    
+
     if (event_initialized(e) == EVLIST_INIT)
     {
     	if (e->ev_arg != NULL)
@@ -380,7 +380,7 @@ static void event_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
     		free(e->ev_arg);
     	}
     	event_del(e);
-    } 
+    }
     free(e);
 }
 
@@ -399,26 +399,26 @@ void php_event_callback_handler(int fd, short ev, void *arg)
 	//MAKE_STD_ZVAL(z_stream);
 	//ZVAL_RESOURCE(z_stream, php_stream_get_resource_id(event->stream));
  	//zend_list_addref(php_stream_get_resource_id(event->stream));
- 	
+
  	//php_debug_zval_dump(&(event->event));
- 	
+
  	params[0] = &(event->stream);
 	params[1] = &(event->flags);
 	params[2] = &(event->event);
-	
+
 	/* callback into php */
 	if (call_user_function_ex(EG(function_table), NULL, event->cb, &retval, 3, params, 0, NULL TSRMLS_CC) == FAILURE)
 	{
 		 php_error_docref(NULL TSRMLS_CC, E_ERROR, "Callback failed");
 	}
-	
-	if (retval) 
+
+	if (retval)
     	zval_ptr_dtor(&retval);
-	
+
 	//zval_ptr_dtor(params[0]);
 	//zval_ptr_dtor(params[2]);
 	//zval_ptr_dtor(&z_stream);
-	
+
 	//zend_list_delete(php_stream_get_resource_id(event->stream));
 	return;
 }
@@ -428,21 +428,21 @@ PHP_FUNCTION(event_set)
 {
 	struct event *e;
     char *callable;
-    int event_flags;
+    long event_flags;
     int fd;
     zval *e_res, *z_cb, *z_stream;
     php_stream *stream;
     php_event *event_args;
 
     /* parse parameters */
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rzlz", &e_res, &z_stream, &event_flags, &z_cb) == FAILURE) 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rzlz", &e_res, &z_stream, &event_flags, &z_cb) == FAILURE)
     {
         RETURN_FALSE;
     }
-    
+
     /* fetch event struct */
     e = (struct event*) zend_fetch_resource(&e_res TSRMLS_CC, -1, PHP_EVENT_RES_NAME, NULL, 1, le_event);
-    if (e == NULL) 
+    if (e == NULL)
     {
         php_error_docref(NULL TSRMLS_CC, E_ERROR, "First argument must be a valid event resource");
         RETURN_FALSE;
@@ -454,7 +454,7 @@ PHP_FUNCTION(event_set)
     	fd = Z_LVAL_P(z_stream);
     }
     else
-    {	
+    {
 	    /* fetch stream */
 	    php_stream_from_zval(stream, &z_stream);
 	    if (!stream)
@@ -471,7 +471,7 @@ PHP_FUNCTION(event_set)
 	    php_stream_set_option(stream, PHP_STREAM_OPTION_BLOCKING, 0, NULL);
 	    stream->flags |= PHP_STREAM_FLAG_NO_BUFFER;
     }
-    
+
 #ifdef ZEND_ENGINE_2
     if (!zend_make_callable(z_cb, &callable TSRMLS_CC))
     {
@@ -479,23 +479,23 @@ PHP_FUNCTION(event_set)
         return;
     }
 #endif
-    
+
     efree(callable);
 
     /* setup event */
     event_args = (php_event*)malloc(sizeof(php_event));
-    
+
     event_args->cb = z_cb;
     Z_ADDREF_P(event_args->cb);
-    
+
     MAKE_STD_ZVAL(event_args->flags);
     ZVAL_LONG(event_args->flags, event_flags);
-    
+
     event_args->stream = z_stream;
     event_args->event = e_res;
 
     event_set(e, fd, event_flags, php_event_callback_handler, (void*)event_args);
-    
+
     RETURN_TRUE;
 }
 
@@ -508,29 +508,29 @@ PHP_FUNCTION(event_add)
 	int argc;
 
 	argc = ZEND_NUM_ARGS();
-	
+
 	/* parse parameters */
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r|zz", &e_res, &z_sec, &z_usec) == FAILURE) 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r|zz", &e_res, &z_sec, &z_usec) == FAILURE)
     {
         RETURN_FALSE;
     }
     /* fetch event struct */
     e = (struct event*) zend_fetch_resource(&e_res TSRMLS_CC, -1, PHP_EVENT_RES_NAME, NULL, 1, le_event);
-    if (e == NULL) 
+    if (e == NULL)
     {
         php_error_docref(NULL TSRMLS_CC, E_ERROR, "First argument must be a valid event resource");
         RETURN_FALSE;
     }
-    
+
     /* add event to scheduler */
     timeout.tv_sec = (argc > 1 && Z_TYPE_P(z_sec) == IS_LONG) ? Z_LVAL_P(z_sec) : 0;
     timeout.tv_usec = (argc > 2 && Z_TYPE_P(z_usec) == IS_LONG) ? Z_LVAL_P(z_usec) : 0;
-    
+
     if (argc > 1)
     	ret = event_add(e, &timeout);
     else
     	ret = event_add(e, 0);
-    
+
     /* check if it worked */
     if (ret == 0)
     {
@@ -547,21 +547,21 @@ PHP_FUNCTION(event_del)
 {
 	zval *e_res;
 	struct event *e;
-	
+
 	/* parse parameters */
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &e_res) == FAILURE) 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &e_res) == FAILURE)
     {
         RETURN_FALSE;
     }
 
     /* fetch event struct */
     e = (struct event*) zend_fetch_resource(&e_res TSRMLS_CC, -1, PHP_EVENT_RES_NAME, NULL, 1, le_event);
-    if (e == NULL) 
+    if (e == NULL)
     {
         php_error_docref(NULL TSRMLS_CC, E_ERROR, "First argument must be a valid event resource");
         RETURN_FALSE;
     }
-    
+
     /* remove event from scheduler */
     if (event_del(e) == 0)
     {
@@ -577,9 +577,9 @@ PHP_FUNCTION(event_del)
 PHP_FUNCTION(event_free)
 {
 	zval *e_res;
-	
+
 	/* parse parameters */
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &e_res) == FAILURE) 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &e_res) == FAILURE)
     {
         RETURN_FALSE;
     }
@@ -606,17 +606,17 @@ PHP_FUNCTION(evhttp_response_set)
 	response->res_code = http_code;
 	response->res_message = strdup(http_message);
 	response->res_body_len = content_len;
-	if (content_len > 0) 
+	if (content_len > 0)
 	{
 	    response->res_body = malloc(content_len+1);
 	    memcpy(response->res_body, content, content_len);
-	}       
+	}
 
 	ZEND_REGISTER_RESOURCE(return_value, response, le_evhttp_response);
 }
 
-void php_callback_handler(struct evhttp_request *req, void *arg)  
-{  
+void php_callback_handler(struct evhttp_request *req, void *arg)
+{
     zval *cb;
     zval *retval = NULL;
     zval **params[1];
@@ -627,7 +627,7 @@ void php_callback_handler(struct evhttp_request *req, void *arg)
     evhttp_response *response;
     char *str;
     int str_len;
-    int res_id; 
+    int res_id;
     void *retval_res;
     int retval_res_type;
 #ifdef ZTS
@@ -647,7 +647,7 @@ void php_callback_handler(struct evhttp_request *req, void *arg)
     zend_list_delete(res_id);
     FREE_ZVAL(req_resource);
 
-    if (!retval) 
+    if (!retval)
     {
         /* We got nothing back from user callback */
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Request callback returned nothing");
@@ -699,7 +699,7 @@ void php_callback_handler(struct evhttp_request *req, void *arg)
            buf = evbuffer_new();
            evhttp_send_reply(req, HTTP_OK, "OK", buf);
     }
-    
+
     zval_ptr_dtor(&retval);
     evbuffer_free(buf);
     return;
@@ -709,17 +709,17 @@ PHP_FUNCTION(evhttp_start)
 {
     struct evhttp *httpd;
     char *listen_ip;
-    int port;
+    long port;
     int listen_ip_len;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &listen_ip, &listen_ip_len, &port) == FAILURE) 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &listen_ip, &listen_ip_len, &port) == FAILURE)
     {
         RETURN_NULL();
     }
 
     httpd = evhttp_start(listen_ip, port);
 
-    if (!httpd) 
+    if (!httpd)
     {
         php_error_docref(NULL TSRMLS_CC, E_WARNING,
                 "Error binding httpd on %s port %d", listen_ip, port);
@@ -728,7 +728,7 @@ PHP_FUNCTION(evhttp_start)
 
     /* Set timeout to a reasonably short value for performance [BB-MH] */
     evhttp_set_timeout(httpd, 10);
-    
+
     ZEND_REGISTER_RESOURCE(return_value, httpd, le_evhttp);
 }
 
@@ -747,7 +747,7 @@ PHP_FUNCTION(evhttp_set_gencb)
     }
 
     ZEND_FETCH_RESOURCE(httpd, struct evhttp*, &res_httpd, -1, PHP_EVHTTP_RES_NAME, le_evhttp);
-    
+
 #ifdef ZEND_ENGINE_2
     if (!zend_make_callable(php_cb, &callable TSRMLS_CC))
     {
@@ -756,10 +756,10 @@ PHP_FUNCTION(evhttp_set_gencb)
         return;
     }
 #endif
-    
+
     MAKE_STD_ZVAL(cb_arg->arg);
     *(cb_arg->arg) = *php_cb;
-    zval_copy_ctor(cb_arg->arg);  
+    zval_copy_ctor(cb_arg->arg);
 #ifdef ZTS
 	cb_arg->TSRMLS_C = TSRMLS_C;
 #endif
@@ -774,7 +774,7 @@ PHP_FUNCTION(evhttp_request_get_uri)
     zval *res_req;
     zval *z_uri;
     const char *uri;
-    
+
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &res_req) == FAILURE)
     {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not fetch resource");
@@ -783,16 +783,16 @@ PHP_FUNCTION(evhttp_request_get_uri)
 
     ZEND_FETCH_RESOURCE(req, struct evhttp_request*, &res_req, -1, PHP_EVHTTP_REQUEST_RES_NAME, le_evhttp_request);
     uri = evhttp_request_get_uri(req);
-    
+
     ZVAL_STRING(return_value, (char*)uri, 1);
-    return; 
+    return;
 }
 
 PHP_FUNCTION(evhttp_request_method)
 {
         struct evhttp_request *req;
         zval *res_req;
-        
+
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &res_req) == FAILURE)
     {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not fetch resource");
@@ -830,7 +830,7 @@ PHP_FUNCTION(evhttp_request_find_header)
     const char *headervalue;
     char *headername;
     int headername_len;
-    
+
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rs", &res_req, &headername, &headername_len) == FAILURE)
     {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not fetch resource");
@@ -843,9 +843,9 @@ PHP_FUNCTION(evhttp_request_find_header)
     	/* header not found */
     	RETURN_NULL();
     }
-    
+
     ZVAL_STRING(return_value, (char*)headervalue, 1);
-    return; 
+    return;
 }
 
 PHP_FUNCTION(evhttp_request_headers)
@@ -862,15 +862,15 @@ PHP_FUNCTION(evhttp_request_headers)
     }
 
     ZEND_FETCH_RESOURCE(req, struct evhttp_request*, &res_req, -1, PHP_EVHTTP_REQUEST_RES_NAME, le_evhttp_request);
-    
+
 	array_init(return_value);
 	q = req->input_headers;
-	
+
     TAILQ_FOREACH (header, q, next)
 	{
 		add_assoc_string(return_value, header->key, header->value, TRUE);
 	}
-    return; 
+    return;
 }
 
 PHP_FUNCTION(evhttp_request_add_header)
@@ -879,7 +879,7 @@ PHP_FUNCTION(evhttp_request_add_header)
     zval *res_req;
     char *headername, *headervalue;
     int headername_len, headervalue_len;
-    
+
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rss", &res_req, &headername, &headername_len, &headervalue, &headervalue_len) == FAILURE)
     {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "error reading parameters");
@@ -891,8 +891,8 @@ PHP_FUNCTION(evhttp_request_add_header)
     {
     	RETURN_FALSE;
     }
-    
-    RETURN_TRUE; 
+
+    RETURN_TRUE;
 }
 
 PHP_FUNCTION(evhttp_response_add_header)
@@ -901,7 +901,7 @@ PHP_FUNCTION(evhttp_response_add_header)
     zval *res_req;
     char *headername, *headervalue;
     int headername_len, headervalue_len;
-    
+
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rss", &res_req, &headername, &headername_len, &headervalue, &headervalue_len) == FAILURE)
     {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "error reading parameters");
@@ -914,8 +914,8 @@ PHP_FUNCTION(evhttp_response_add_header)
     {
     	RETURN_FALSE;
     }
-    
-    RETURN_TRUE; 
+
+    RETURN_TRUE;
 }
 
 
@@ -923,7 +923,7 @@ PHP_FUNCTION(evhttp_request_status)
 {
     struct evhttp_request *req;
     zval *res_req;
-    
+
     if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &res_req) == FAILURE)
     {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "error reading parameters");
@@ -931,7 +931,7 @@ PHP_FUNCTION(evhttp_request_status)
     }
 
     ZEND_FETCH_RESOURCE(req, struct evhttp_request*, &res_req, -1, PHP_EVHTTP_REQUEST_RES_NAME, le_evhttp_request);
-    RETURN_LONG(req->response_code); 
+    RETURN_LONG(req->response_code);
 }
 
 
@@ -945,10 +945,10 @@ PHP_FUNCTION(evhttp_request_input_buffer)
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not fetch resource");
         RETURN_FALSE;
     }
-    
+
     ZEND_FETCH_RESOURCE(req, struct evhttp_request*, &res_req, -1, PHP_EVHTTP_REQUEST_RES_NAME, le_evhttp_request);
     ZEND_REGISTER_RESOURCE(return_value, req->input_buffer, le_evbuffer);
-}   
+}
 
 PHP_FUNCTION(evhttp_request_body)
 {
@@ -962,25 +962,25 @@ PHP_FUNCTION(evhttp_request_body)
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not fetch resource");
         RETURN_FALSE;
     }
-    
+
     ZEND_FETCH_RESOURCE(req, struct evhttp_request*, &res_req, -1, PHP_EVHTTP_REQUEST_RES_NAME, le_evhttp_request);
 
 	body_len = evbuffer_get_length(req->input_buffer);
-    
+
     if (req->input_buffer == NULL || body_len == 0)
     {
     	RETURN_FALSE;
     }
-    
+
     body = emalloc(body_len + 1);
     status = evbuffer_remove(req->input_buffer, (void *) body, body_len + 1);
 	if (status == -1) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not get data from resource");
 		RETURN_FALSE;
 	}
-    
+
     ZVAL_STRING(return_value, body, 0);
-}   
+}
 
 PHP_FUNCTION(evhttp_request_append_body)
 {
@@ -994,27 +994,27 @@ PHP_FUNCTION(evhttp_request_append_body)
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "error reading params");
         RETURN_FALSE;
     }
-    
+
     ZEND_FETCH_RESOURCE(req, struct evhttp_request*, &res_req, -1, PHP_EVHTTP_REQUEST_RES_NAME, le_evhttp_request);
-    
+
     if (req->output_buffer == NULL)
     {
     	RETURN_FALSE;
     }
-    
+
     if (evbuffer_add(req->output_buffer, body, body_len) != 0)
     {
     	RETURN_FALSE;
     }
     RETURN_TRUE;
-}   
+}
 
 
 PHP_FUNCTION(evbuffer_new)
 {
-    struct evbuffer *buf;  
-    buf = evbuffer_new();  
-       
+    struct evbuffer *buf;
+    buf = evbuffer_new();
+
     if (buf == NULL)
     {
         php_error_docref(NULL TSRMLS_CC, E_WARNING, "Couldn't create evbuffer.");
@@ -1096,18 +1096,18 @@ void callback_buffered_on_read(struct bufferevent *bev, void *arg)
 #endif
 	zval **params[1];
 	zval *retval = NULL;
- 	
+
 	params[0] = &(event->res_bufferevent);
-	
+
 	/* callback into php */
 	if (call_user_function_ex(EG(function_table), NULL, event->r_cb, &retval, 1, params, 0, NULL TSRMLS_CC) == FAILURE)
 	{
 		 php_error_docref(NULL TSRMLS_CC, E_ERROR, "Callback failed");
 	}
-	
+
 	if (retval)
     	zval_ptr_dtor(&retval);
-	
+
 	return;
 }
 
@@ -1123,19 +1123,19 @@ void callback_buffered_on_write(struct bufferevent *bev, void *arg)
 #endif
 	zval **params[1];
 	zval *retval = NULL;
- 	
+
 	params[0] = &(event->res_bufferevent);
-	
+
 	/* callback into php */
 	if (call_user_function_ex(EG(function_table), NULL, event->w_cb, &retval, 1, params, 0, NULL TSRMLS_CC) == FAILURE)
 	{
 		 php_error_docref(NULL TSRMLS_CC, E_ERROR, "Callback failed");
 	}
-	
-	if (retval) 
+
+	if (retval)
     	zval_ptr_dtor(&retval);
-	
-	return;	
+
+	return;
 }
 
 /**
@@ -1151,25 +1151,25 @@ void callback_buffered_on_error(struct bufferevent *bev, short what, void *arg)
 	zval **params[3];
 	zval *code;
 	zval *retval = NULL;
-	
+
  	params[0] = &(event->stream);
 	params[1] = &(event->res_bufferevent);
-	
+
 	MAKE_STD_ZVAL(code);
 	ZVAL_LONG(code, what);
 	params[2] = &code;
-	
+
 	/* callback into php */
 	if (call_user_function_ex(EG(function_table), NULL, event->e_cb, &retval, 3, params, 0, NULL TSRMLS_CC) == FAILURE)
 	{
 		 php_error_docref(NULL TSRMLS_CC, E_ERROR, "Callback failed");
 	}
-	
-	if (retval) 
+
+	if (retval)
     	zval_ptr_dtor(&retval);
-	
-	zval_ptr_dtor(&code); 
-	
+
+	zval_ptr_dtor(&code);
+
 	return;
 }
 
@@ -1184,7 +1184,7 @@ PHP_FUNCTION(bufferevent_new)
     php_bufferevent *be;
 
     /* parse parameters */
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzzz", &z_stream, &z_rcb, &z_wcb, &z_ecb) == FAILURE) 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzzz", &z_stream, &z_rcb, &z_wcb, &z_ecb) == FAILURE)
     {
         RETURN_FALSE;
     }
@@ -1201,12 +1201,12 @@ PHP_FUNCTION(bufferevent_new)
     	php_error_docref(NULL TSRMLS_CC, E_WARNING, "Incompatible stream");
     	RETURN_FALSE;
     }
-    
+
     /* set non-blocking and non-buffered to not let it step on our hands here */
     php_stream_set_option(stream, PHP_STREAM_OPTION_BLOCKING, 0, NULL);
     stream->flags |= PHP_STREAM_FLAG_NO_BUFFER;
-    
-    
+
+
     /* make callbacks callable */
 #ifdef ZEND_ENGINE_2
     if (!zend_make_callable(z_rcb, &r_callable TSRMLS_CC))
@@ -1225,18 +1225,18 @@ PHP_FUNCTION(bufferevent_new)
         return;
     }
 #endif
-    
+
     efree(r_callable);
     efree(w_callable);
     efree(e_callable);
-    
+
     /* allocate bufferevent struct for extension use */
     if (!(be = malloc(sizeof(php_bufferevent))))
     {
      	php_error_docref(NULL TSRMLS_CC, E_ERROR, "Could not create php_bufferevent internal struct");
        	RETURN_FALSE;
     }
-    
+
     /* make struct with all callback functions, stream and the event resource */
     be->r_cb = z_rcb;
     be->w_cb = z_wcb;
@@ -1255,10 +1255,10 @@ PHP_FUNCTION(bufferevent_new)
     	php_error_docref(NULL TSRMLS_CC, E_ERROR, "Could not create bufferevent");
     	RETURN_FALSE;
     }
-    
+
     be->stream = z_stream;
     Z_ADDREF_P(be->stream);
-    
+
     MAKE_STD_ZVAL(be->res_bufferevent);
     ZEND_REGISTER_RESOURCE(be->res_bufferevent, e, le_bufferevent);
     RETVAL_ZVAL(be->res_bufferevent, 0, 0);
@@ -1268,22 +1268,22 @@ PHP_FUNCTION(bufferevent_enable)
 {
 	zval *e_res;
 	struct bufferevent *e;
-	int flags;
-	
+	long flags;
+
 	/* parse parameters */
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &e_res, &flags) == FAILURE) 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &e_res, &flags) == FAILURE)
     {
         RETURN_FALSE;
     }
 
     /* fetch event struct */
     e = (struct bufferevent*) zend_fetch_resource(&e_res TSRMLS_CC, -1, PHP_BUFFEREVENT_RES_NAME, NULL, 1, le_bufferevent);
-    if (e == NULL) 
+    if (e == NULL)
     {
         php_error_docref(NULL TSRMLS_CC, E_ERROR, "First argument must be a valid bufferevent resource");
         RETURN_FALSE;
     }
-    
+
     /* enable event in the scheduler */
     if (bufferevent_enable(e, flags) == 0)
     {
@@ -1300,22 +1300,22 @@ PHP_FUNCTION(bufferevent_disable)
 {
 	zval *e_res;
 	struct bufferevent *e;
-	int flags;
-	
+	long flags;
+
 	/* parse parameters */
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &e_res, &flags) == FAILURE) 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &e_res, &flags) == FAILURE)
     {
         RETURN_FALSE;
     }
 
     /* fetch event struct */
     e = (struct bufferevent*) zend_fetch_resource(&e_res TSRMLS_CC, -1, PHP_BUFFEREVENT_RES_NAME, NULL, 1, le_bufferevent);
-    if (e == NULL) 
+    if (e == NULL)
     {
         php_error_docref(NULL TSRMLS_CC, E_ERROR, "First argument must be a valid bufferevent resource");
         RETURN_FALSE;
     }
-    
+
     /* disable event in the scheduler */
     if (bufferevent_disable(e, flags) == 0)
     {
@@ -1332,14 +1332,15 @@ PHP_FUNCTION(bufferevent_read)
 {
 	zval *target, *e_res;
 	struct bufferevent *e;
-	int count, bytesread;
-	
+    long count;
+    int bytesread;
+
 	/* parse parameters */
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzl", &e_res, &target, &count) == FAILURE) 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zzl", &e_res, &target, &count) == FAILURE)
     {
         RETURN_FALSE;
     }
-    
+
     if (!PZVAL_IS_REF(target) || count < 1)
     {
         RETURN_FALSE;
@@ -1347,25 +1348,25 @@ PHP_FUNCTION(bufferevent_read)
 
     /* fetch event struct */
     e = (struct bufferevent*) zend_fetch_resource(&e_res TSRMLS_CC, -1, PHP_BUFFEREVENT_RES_NAME, NULL, 1, le_bufferevent);
-    if (e == NULL) 
+    if (e == NULL)
     {
         php_error_docref(NULL TSRMLS_CC, E_ERROR, "First argument must be a valid bufferevent resource");
         RETURN_FALSE;
     }
-        
+
     convert_to_string(target);
 
     /* enlarge */
     Z_STRVAL_P(target) = erealloc(Z_STRVAL_P(target), Z_STRLEN_P(target) + count + 1);
     bytesread = bufferevent_read(e, Z_STRVAL_P(target) + Z_STRLEN_P(target), count + 1);
-    
+
     if (bytesread < count)
     {
     	// TODO: try to avoid realloc if less data than count was available
     	Z_STRVAL_P(target) = erealloc(Z_STRVAL_P(target), Z_STRLEN_P(target) + bytesread + 1);
     	count = bytesread;
     }
-    
+
     Z_STRLEN_P(target) += count;
     *(Z_STRVAL_P(target) + Z_STRLEN_P(target)) = 0;
     RETURN_LONG(count);
@@ -1378,27 +1379,27 @@ PHP_FUNCTION(bufferevent_write)
 	struct bufferevent *e;
 	char *data;
 	int count;
-	
+
 	/* parse parameters */
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zs", &e_res, &data, &count) == FAILURE) 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "zs", &e_res, &data, &count) == FAILURE)
     {
         RETURN_FALSE;
     }
 
     /* fetch event struct */
     e = (struct bufferevent*) zend_fetch_resource(&e_res TSRMLS_CC, -1, PHP_BUFFEREVENT_RES_NAME, NULL, 1, le_bufferevent);
-    if (e == NULL) 
+    if (e == NULL)
     {
         php_error_docref(NULL TSRMLS_CC, E_ERROR, "First argument must be a valid bufferevent resource");
         RETURN_FALSE;
     }
-    
+
     /* write */
     if (bufferevent_write(e, data, count) != 0)
     {
     	RETURN_FALSE;
     }
-    
+
     RETURN_TRUE;
 }
 
@@ -1423,7 +1424,7 @@ PHP_FUNCTION(ntohl)
 {
 	char *in;
 	int in_len;
-	
+
 
 	if ((zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "s", &in, &in_len) == FAILURE) || (in_len != 4))
 	{
@@ -1449,7 +1450,7 @@ PHP_FUNCTION(htons)
 
 	RETVAL_DOUBLE(htons(*((uint16_t*)in)));
 	return;
-	
+
 }
 
 
@@ -1473,10 +1474,10 @@ PHP_FUNCTION(evhttp_connection_new)
 {
 	struct evhttp_connection *con;
     char *host_ip;
-    int port;
+    long port;
     int host_ip_len;
 
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &host_ip, &host_ip_len, &port) == FAILURE) 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "sl", &host_ip, &host_ip_len, &port) == FAILURE)
     {
         RETURN_NULL();
     }
@@ -1484,13 +1485,13 @@ PHP_FUNCTION(evhttp_connection_new)
     con = evhttp_connection_new(host_ip, port);
 
 
-    if (!con) 
+    if (!con)
     {
         php_error_docref(NULL TSRMLS_CC, E_WARNING,
                 "Error connection to %s port %d", host_ip, port);
         RETURN_FALSE;
     }
-    
+
     ZEND_REGISTER_RESOURCE(return_value, con, le_evhttp_connection);
 }
 
@@ -1505,24 +1506,24 @@ void callback_connection_on_close(struct evhttp_connection *con, void *arg)
 #endif
 	zval **params[1];
 	zval *retval = NULL;
- 	
+
 	params[0] = &(connection->res_httpcon);
-	
+
 	/* callback into php */
 	if (call_user_function_ex(EG(function_table), NULL, connection->c_cb, &retval, 1, params, 0, NULL TSRMLS_CC) == FAILURE)
 	{
 		 php_error_docref(NULL TSRMLS_CC, E_ERROR, "Callback failed");
 	}
-	
+
 	if (retval)
     	zval_ptr_dtor(&retval);
-	
+
 	/* free internal arg struct */
 	zval_dtor(connection->c_cb);
 	FREE_ZVAL(connection->c_cb);
 	FREE_ZVAL(connection->res_httpcon);
 	free(connection);
-	
+
 	return;
 }
 
@@ -1535,19 +1536,19 @@ PHP_FUNCTION(evhttp_connection_set_closecb)
     zval *z_ccb, *con_res;
 
     /* parse parameters */
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rz", &con_res, &z_ccb) == FAILURE) 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rz", &con_res, &z_ccb) == FAILURE)
     {
         RETURN_FALSE;
     }
-    
+
     /* fetch connection struct */
     c = (struct evhttp_connection*) zend_fetch_resource(&con_res TSRMLS_CC, -1, PHP_EVHTTP_CONNECTION_RES_NAME, NULL, 1, le_evhttp_connection);
-    if (c == NULL) 
+    if (c == NULL)
     {
         php_error_docref(NULL TSRMLS_CC, E_ERROR, "First argument must be a valid evhttp_connection resource");
         RETURN_FALSE;
     }
-    
+
     /* make callbacks callable */
 #ifdef ZEND_ENGINE_2
     if (!zend_make_callable(z_ccb, &c_callable TSRMLS_CC))
@@ -1556,25 +1557,25 @@ PHP_FUNCTION(evhttp_connection_set_closecb)
         return;
     }
 #endif
-    
+
     efree(c_callable);
-    
+
     /* allocate httpevent struct for extension use */
     if (!(hc = malloc(sizeof(php_httpcon))))
     {
      	php_error_docref(NULL TSRMLS_CC, E_ERROR, "Could not create php_httpcon internal struct");
        	RETURN_FALSE;
     }
-    
+
     /* make struct with all callback functions, stream and the event resource */
     hc->c_cb = z_ccb;
     Z_ADDREF_P(hc->c_cb);
     hc->res_httpcon = con_res;
     Z_ADDREF_P(hc->res_httpcon);
-    
+
     /* call libevent */
     evhttp_connection_set_closecb(c, callback_connection_on_close, hc);
-    
+
     RETURN_TRUE;
 }
 
@@ -1590,18 +1591,18 @@ void callback_request_on_complete(struct evhttp_request *req, void *arg)
 #endif
 	zval **params[1];
 	zval *retval = NULL;
- 	
+
 	params[0] = &(event->res_httpevent);
-	
+
 	/* callback into php */
 	if (call_user_function_ex(EG(function_table), NULL, event->r_cb, &retval, 1, params, 0, NULL TSRMLS_CC) == FAILURE)
 	{
 		 php_error_docref(NULL TSRMLS_CC, E_ERROR, "Callback failed");
 	}
-	
+
 	if (retval)
     	zval_ptr_dtor(&retval);
-	
+
 	return;
 }
 
@@ -1613,11 +1614,11 @@ PHP_FUNCTION(evhttp_request_new)
     zval *z_rcb;
 
     /* parse parameters */
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &z_rcb) == FAILURE) 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &z_rcb) == FAILURE)
     {
         RETURN_FALSE;
-    }    
-    
+    }
+
     /* make callbacks callable */
 #ifdef ZEND_ENGINE_2
     if (!zend_make_callable(z_rcb, &r_callable TSRMLS_CC))
@@ -1626,16 +1627,16 @@ PHP_FUNCTION(evhttp_request_new)
         return;
     }
 #endif
-    
+
     efree(r_callable);
-    
+
     /* allocate httpevent struct for extension use */
     if (!(he = malloc(sizeof(php_httpevent))))
     {
      	php_error_docref(NULL TSRMLS_CC, E_ERROR, "Could not create php_httpevent internal struct");
        	RETURN_FALSE;
     }
-    
+
     /* make struct with all callback functions, stream and the event resource */
     he->r_cb = z_rcb;
     Z_ADDREF_P(he->r_cb);
@@ -1648,7 +1649,7 @@ PHP_FUNCTION(evhttp_request_new)
     	php_error_docref(NULL TSRMLS_CC, E_ERROR, "Could not create httpevent");
     	RETURN_FALSE;
     }
-    
+
     MAKE_STD_ZVAL(he->res_httpevent);
     ZEND_REGISTER_RESOURCE(he->res_httpevent, r, le_evhttp_request);
     RETVAL_ZVAL(he->res_httpevent, 0, 0);
@@ -1660,24 +1661,25 @@ PHP_FUNCTION(evhttp_make_request)
 	zval *con_res, *req_res;
 	struct evhttp_connection *con;
 	struct evhttp_request *req;
-	int type, url_len;
+    long type;
+	int url_len;
 	char *url;
 	int ret;
-	
+
 	/* parse parameters */
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rrls", &con_res, &req_res, &type, &url, &url_len) == FAILURE) 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rrls", &con_res, &req_res, &type, &url, &url_len) == FAILURE)
     {
         RETURN_FALSE;
     }
 
     /* fetch connection struct */
     con = (struct evhttp_connection*) zend_fetch_resource(&con_res TSRMLS_CC, -1, PHP_EVHTTP_CONNECTION_RES_NAME, NULL, 1, le_evhttp_connection);
-    if (con == NULL) 
+    if (con == NULL)
     {
         php_error_docref(NULL TSRMLS_CC, E_ERROR, "First argument must be a valid evhttp_connection resource");
         RETURN_FALSE;
     }
-    
+
 	/* fetch request struct */
     req = (struct evhttp_request*) zend_fetch_resource(&req_res TSRMLS_CC, -1, PHP_EVHTTP_REQUEST_RES_NAME, NULL, 1, le_evhttp_request);
     if (req == NULL)
@@ -1688,10 +1690,10 @@ PHP_FUNCTION(evhttp_make_request)
 
 	zend_list_addref(Z_RESVAL_P(req_res));
 	//Z_ADDREF_P(req_res);
-	
+
     ret = evhttp_make_request(con, req, type, url);
 	//php_printf("%d, %s, %d\n", type, url, ret);
-	
+
     RETURN_LONG(ret);
 }
 
@@ -1704,7 +1706,7 @@ PHP_FUNCTION(evhttp_request_free)
     zval *res_req;
 
     /* parse parameters */
-    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &res_req) == FAILURE) 
+    if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "z", &res_req) == FAILURE)
     {
 		php_error_docref(NULL TSRMLS_CC, E_ERROR, "First argument must be a valid evhttp_request resource");
         RETURN_FALSE;
