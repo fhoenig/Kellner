@@ -32,7 +32,7 @@ function test_callback($evhttp_request)
 {
     echo "script-land memory: ".memory_get_usage()." and real memory from system: ".memory_get_usage(true)."\n";
 
-    $uri = evhttp_request_uri($evhttp_request);
+    $uri = evhttp_request_get_uri($evhttp_request);
 
     $ct = evhttp_request_find_header($evhttp_request, 'Content-Type');
     echo "URI: $uri\n";
