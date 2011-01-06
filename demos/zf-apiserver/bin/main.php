@@ -84,7 +84,7 @@ class ApiServer
         try
         {
 			printf("Used script-land memory %.2f MB\n", memory_get_usage()/(1024*1024));
-			$uri = evhttp_request_uri($r);
+			$uri = evhttp_request_get_uri($r);
 			$parts = parse_url($uri);
 			
 			// let's process the request with the chosen webservice protocol
