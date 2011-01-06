@@ -782,7 +782,7 @@ PHP_FUNCTION(evhttp_request_get_uri)
     }
 
     ZEND_FETCH_RESOURCE(req, struct evhttp_request*, &res_req, -1, PHP_EVHTTP_REQUEST_RES_NAME, le_evhttp_request);
-    uri = evhttp_request_get_uri(req);
+    uri = evhttp_request_uri(req);
     
     ZVAL_STRING(return_value, (char*)uri, 1);
     return; 
@@ -808,11 +808,11 @@ PHP_FUNCTION(evhttp_request_method)
                         RETURN_STRING("POST", 1);
                 case EVHTTP_REQ_HEAD:
                         RETURN_STRING("HEAD", 1);
-                case EVHTTP_REQ_PUT:
+/*                case EVHTTP_REQ_PUT:
                         RETURN_STRING("PUT", 1);
                 case EVHTTP_REQ_DELETE:
                         RETURN_STRING("DELETE", 1);
-/*                case EVHTTP_REQ_OPTIONS:
+                case EVHTTP_REQ_OPTIONS:
                         RETURN_STRING("OPTIONS", 1);
                 case EVHTTP_REQ_TRACE:
                         RETURN_STRING("TRACE", 1);
@@ -965,7 +965,7 @@ PHP_FUNCTION(evhttp_request_body)
     
     ZEND_FETCH_RESOURCE(req, struct evhttp_request*, &res_req, -1, PHP_EVHTTP_REQUEST_RES_NAME, le_evhttp_request);
 
-	body_len = evbuffer_get_length(req->input_buffer);
+	body_len = EVBUFFER_LENGTH(req->input_buffer);
     
     if (req->input_buffer == NULL || body_len == 0)
     {
@@ -974,6 +974,7 @@ PHP_FUNCTION(evhttp_request_body)
     
     body = emalloc(body_len + 1);
     status = evbuffer_remove(req->input_buffer, (void *) body, body_len + 1);
+    body[body_len] = 0;
 	if (status == -1) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "Could not get data from resource");
 		RETURN_FALSE;
