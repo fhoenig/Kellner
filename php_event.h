@@ -75,15 +75,38 @@ PHP_MINFO_FUNCTION(event);
 /*
  * Basic libevent functions
  */
-PHP_FUNCTION(event_init);
+PHP_FUNCTION(event_base_new);
+PHP_FUNCTION(event_base_free);
+PHP_FUNCTION(event_base_dispatch);
+PHP_FUNCTION(event_base_loop);
+PHP_FUNCTION(event_base_loopbreak);
+PHP_FUNCTION(event_base_loopexit);
+PHP_FUNCTION(event_base_set);
+PHP_FUNCTION(event_base_priority_init);
+
 PHP_FUNCTION(event_reinit);
 PHP_FUNCTION(event_new);
 PHP_FUNCTION(event_free);
 PHP_FUNCTION(event_set);
 PHP_FUNCTION(event_add);
 PHP_FUNCTION(event_del);
-PHP_FUNCTION(event_dispatch);
-PHP_FUNCTION(event_loopbreak);
+
+/*
+ * Buffer functions
+ */
+PHP_FUNCTION(evbuffer_new);
+PHP_FUNCTION(evbuffer_free);
+PHP_FUNCTION(evbuffer_add);
+PHP_FUNCTION(evbuffer_readline);
+
+/*
+ * Buffered Events
+ */
+PHP_FUNCTION(bufferevent_new);
+PHP_FUNCTION(bufferevent_enable);
+PHP_FUNCTION(bufferevent_disable);
+PHP_FUNCTION(bufferevent_read);
+PHP_FUNCTION(bufferevent_write);
 
 /*
  * HTTP Client/Server functions
@@ -110,27 +133,10 @@ PHP_FUNCTION(evhttp_request_status);
 PHP_FUNCTION(evhttp_request_append_body);
 
 /*
- * Buffer functions
- */
-PHP_FUNCTION(evbuffer_new);
-PHP_FUNCTION(evbuffer_free);
-PHP_FUNCTION(evbuffer_add);
-PHP_FUNCTION(evbuffer_readline);
-
-/*
  * Response functions
  */
 PHP_FUNCTION(evhttp_response_set);
 PHP_FUNCTION(evhttp_response_add_header);
-
-/*
- * Buffered Events
- */
-PHP_FUNCTION(bufferevent_new);
-PHP_FUNCTION(bufferevent_enable);
-PHP_FUNCTION(bufferevent_disable);
-PHP_FUNCTION(bufferevent_read);
-PHP_FUNCTION(bufferevent_write);
 
 /*
  * Network byte-order conversion functions
@@ -155,6 +161,7 @@ ZEND_BEGIN_MODULE_GLOBALS(event)
 ZEND_END_MODULE_GLOBALS(event)
 */
 
+#define PHP_EVENT_BASE_RES_NAME "EVENT BASE"
 #define PHP_EVENT_RES_NAME "EVENT"
 #define PHP_BUFFEREVENT_RES_NAME "BUFFEREVENT"
 #define PHP_EVHTTP_RES_NAME "EVHTTP"
@@ -180,6 +187,14 @@ ZEND_END_MODULE_GLOBALS(event)
 #define EVENT_G(v) (event_globals.v)
 #endif
 
+/*
+ * PHP Event Base struct
+ */
+typedef struct _php_event_base {
+	struct event_base *base;
+	int rsrc_id;
+	zend_uint events;
+} php_event_base;
 
 /*
  * PHP Event struct

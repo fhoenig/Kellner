@@ -41,8 +41,9 @@
 #endif
 
 /* include libevent header */
-#include <event.h>
-#include <evhttp.h>
+#include <event2/event.h>
+#include <event2/http.h>
+#include <event2/bufferevent.h>
 
 /* network byteorder stuff */
 #include <arpa/inet.h>
@@ -51,19 +52,18 @@
 ZEND_DECLARE_MODULE_GLOBALS(event)
 */
 
-
 /* True global resources - no need for thread safety here */
 static int le_evhttp;
 static int le_evhttp_request;
 static int le_evbuffer;
 static int le_event;
+static int le_event_base;
 static int le_bufferevent;
 static int le_evhttp_connection;
 static int le_evhttp_response;
 
-static struct event_base *current_base;
-
 /* Forward declarations */
+static void event_base_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 static void event_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 static void bufferevent_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC);
 static void evhttp_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC);
@@ -88,46 +88,55 @@ static unsigned char bufferevent_read_byref_arginfo[] = { 2, BYREF_FORCE, BYREF_
  * Every user visible function must have an entry in event_functions[].
  */
 zend_function_entry event_functions[] = {
-    PHP_FE(event_init, NULL)
-    PHP_FE(event_reinit, NULL)
-    PHP_FE(event_new, NULL)
-    PHP_FE(event_free, NULL)
-    PHP_FE(event_set, NULL)
-    PHP_FE(event_add, NULL)
-    PHP_FE(event_del, NULL)
-    PHP_FE(event_dispatch, NULL)
-    PHP_FE(event_loopbreak, NULL)
-    PHP_FE(evhttp_start, NULL)
-    PHP_FE(evhttp_connection_new, NULL)
-    PHP_FE(evhttp_connection_set_closecb, NULL)
-    PHP_FE(evhttp_request_new, NULL)
-    PHP_FE(evhttp_request_free, NULL)
-    PHP_FE(evhttp_make_request, NULL)
-	PHP_FE(evhttp_set_gencb, NULL)
-    PHP_FE(evhttp_request_get_uri, NULL)
-    PHP_FE(evhttp_request_method, NULL)
-    PHP_FE(evhttp_request_body, NULL)
-    PHP_FE(evhttp_request_append_body, NULL)
-	PHP_FE(evhttp_request_input_buffer, NULL)
-	PHP_FE(evhttp_request_find_header, NULL)
-    PHP_FE(evhttp_request_headers, NULL)
-	PHP_FE(evhttp_request_add_header, NULL)
-	PHP_FE(evhttp_request_status, NULL)
-    PHP_FE(evhttp_response_set, NULL)
-	PHP_FE(evhttp_response_add_header, NULL)
-	PHP_FE(evbuffer_new, NULL)
-    PHP_FE(evbuffer_free, NULL)
-    PHP_FE(evbuffer_add, NULL)
-	PHP_FE(evbuffer_readline, NULL)
-	PHP_FE(bufferevent_new, NULL)
-	PHP_FE(bufferevent_enable, NULL)
-	PHP_FE(bufferevent_disable, NULL)
-	PHP_FE(bufferevent_read, bufferevent_read_byref_arginfo)
-	PHP_FE(bufferevent_write, NULL)
-	PHP_FE(ntohs, NULL)
-	PHP_FE(ntohl, NULL)
-	PHP_FE(htons, NULL)
-	PHP_FE(htonl, NULL)
+    PHP_FE(event_base_new, 				    NULL)
+	PHP_FE(event_base_free, 		     	NULL)
+	PHP_FE(event_base_dispatch,		    	NULL)
+	PHP_FE(event_base_loop, 		    	NULL)
+	PHP_FE(event_base_loopbreak, 	    	NULL)
+	PHP_FE(event_base_loopexit, 	    	NULL)
+	PHP_FE(event_base_set,			    	NULL)
+	PHP_FE(event_base_priority_init,        NULL)
+
+    PHP_FE(event_reinit,                    NULL)
+    PHP_FE(event_new,                       NULL)
+    PHP_FE(event_free,                      NULL)
+    PHP_FE(event_set,                       NULL)
+    PHP_FE(event_add,                       NULL)
+    PHP_FE(event_del,                       NULL)
+
+	PHP_FE(evbuffer_new,                    NULL)
+    PHP_FE(evbuffer_free,                   NULL)
+    PHP_FE(evbuffer_add,                    NULL)
+	PHP_FE(evbuffer_readline,               NULL)
+	PHP_FE(bufferevent_new,                 NULL)
+	PHP_FE(bufferevent_enable,              NULL)
+	PHP_FE(bufferevent_disable,             NULL)
+	PHP_FE(bufferevent_read,                bufferevent_read_byref_arginfo)
+	PHP_FE(bufferevent_write,               NULL)
+
+    PHP_FE(evhttp_start,                    NULL)
+    PHP_FE(evhttp_connection_new,           NULL)
+    PHP_FE(evhttp_connection_set_closecb,   NULL)
+    PHP_FE(evhttp_request_new,              NULL)
+    PHP_FE(evhttp_request_free,             NULL)
+    PHP_FE(evhttp_make_request,             NULL)
+	PHP_FE(evhttp_set_gencb,                NULL)
+    PHP_FE(evhttp_request_get_uri,          NULL)
+    PHP_FE(evhttp_request_method,           NULL)
+    PHP_FE(evhttp_request_body,             NULL)
+    PHP_FE(evhttp_request_append_body,      NULL)
+	PHP_FE(evhttp_request_input_buffer,     NULL)
+	PHP_FE(evhttp_request_find_header,      NULL)
+    PHP_FE(evhttp_request_headers,          NULL)
+	PHP_FE(evhttp_request_add_header,       NULL)
+	PHP_FE(evhttp_request_status,           NULL)
+    PHP_FE(evhttp_response_set,             NULL)
+	PHP_FE(evhttp_response_add_header,      NULL)
+
+	PHP_FE(ntohs,                           NULL)
+	PHP_FE(ntohl,                           NULL)
+	PHP_FE(htons,                           NULL)
+	PHP_FE(htonl,                           NULL)
 
 	{NULL, NULL, NULL}	/* Must be the last line in event_functions[] */
 };
@@ -187,13 +196,15 @@ PHP_MINIT_FUNCTION(event)
 	*/
 
 	/* resource types */
-	le_evhttp = zend_register_list_destructors_ex(evhttp_dtor, NULL, PHP_EVHTTP_RES_NAME, module_number);
-    le_evhttp_request = zend_register_list_destructors_ex(evhttp_request_dtor, NULL, PHP_EVHTTP_REQUEST_RES_NAME, module_number);
-    le_evhttp_connection = zend_register_list_destructors_ex(evhttp_connection_dtor, NULL, PHP_EVHTTP_CONNECTION_RES_NAME, module_number);
-    le_evbuffer = zend_register_list_destructors_ex(NULL, NULL, PHP_EVBUFFER_RES_NAME, module_number);
+    le_event_base = zend_register_list_destructors_ex(event_base_dtor, NULL, PHP_EVENT_BASE_RES_NAME, module_number);
     le_event = zend_register_list_destructors_ex(event_dtor, NULL, PHP_EVENT_RES_NAME, module_number);
+    le_evbuffer = zend_register_list_destructors_ex(NULL, NULL, PHP_EVBUFFER_RES_NAME, module_number);
     le_bufferevent = zend_register_list_destructors_ex(bufferevent_dtor, NULL, PHP_BUFFEREVENT_RES_NAME, module_number);
-        le_evhttp_response = zend_register_list_destructors_ex(evhttp_response_dtor, NULL, PHP_EVHTTP_RESPONSE_RES_NAME, module_number);
+	le_evhttp = zend_register_list_destructors_ex(evhttp_dtor, NULL, PHP_EVHTTP_RES_NAME, module_number);
+    le_evhttp_connection = zend_register_list_destructors_ex(evhttp_connection_dtor, NULL, PHP_EVHTTP_CONNECTION_RES_NAME, module_number);
+    le_evhttp_request = zend_register_list_destructors_ex(evhttp_request_dtor, NULL, PHP_EVHTTP_REQUEST_RES_NAME, module_number);
+    le_evhttp_response = zend_register_list_destructors_ex(evhttp_response_dtor, NULL, PHP_EVHTTP_RESPONSE_RES_NAME, module_number);
+
 
     /* libevent constants */
     REGISTER_LONG_CONSTANT("EV_READ", EV_READ, CONST_CS | CONST_PERSISTENT);
@@ -202,13 +213,23 @@ PHP_MINIT_FUNCTION(event)
     REGISTER_LONG_CONSTANT("EV_SIGNAL", EV_SIGNAL, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("EV_PERSIST", EV_PERSIST, CONST_CS | CONST_PERSISTENT);
 
-    REGISTER_LONG_CONSTANT("EVBUFFER_EOF", EVBUFFER_EOF, CONST_CS | CONST_PERSISTENT);
-    REGISTER_LONG_CONSTANT("EVBUFFER_ERROR", EVBUFFER_ERROR, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("BEV_EVENT_EOF", BEV_EVENT_EOF, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("BEV_EVENT_ERROR", BEV_EVENT_ERROR, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("BEV_EVENT_READING", BEV_EVENT_READING, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("BEV_EVENT_WRITING", BEV_EVENT_WRITING, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("BEV_EVENT_TIMEOUT", BEV_EVENT_TIMEOUT, CONST_CS | CONST_PERSISTENT); 
+    REGISTER_LONG_CONSTANT("BEV_EVENT_CONNECTED", BEV_EVENT_CONNECTED, CONST_CS | CONST_PERSISTENT);
 
     REGISTER_LONG_CONSTANT("EVHTTP_REQ_GET", EVHTTP_REQ_GET, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("EVHTTP_REQ_POST", EVHTTP_REQ_POST, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("EVHTTP_REQ_HEAD", EVHTTP_REQ_HEAD, CONST_CS | CONST_PERSISTENT);
-
+    REGISTER_LONG_CONSTANT("EVHTTP_REQ_PUT", EVHTTP_REQ_PUT, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("EVHTTP_REQ_DELETE", EVHTTP_REQ_DELETE, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("EVHTTP_REQ_OPTIONS", EVHTTP_REQ_OPTIONS, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("EVHTTP_REQ_TRACE", EVHTTP_REQ_TRACE, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("EVHTTP_REQ_CONNECT", EVHTTP_REQ_CONNECT, CONST_CS | CONST_PERSISTENT);
+    REGISTER_LONG_CONSTANT("EVHTTP_REQ_PATCH", EVHTTP_REQ_PATCH, CONST_CS | CONST_PERSISTENT);
+    
     REGISTER_LONG_CONSTANT("EVHTTP_REQUEST", EVHTTP_REQUEST, CONST_CS | CONST_PERSISTENT);
     REGISTER_LONG_CONSTANT("EVHTTP_RESPONSE", EVHTTP_RESPONSE, CONST_CS | CONST_PERSISTENT);
 
@@ -241,33 +262,185 @@ PHP_MINFO_FUNCTION(event)
 }
 /* }}} */
 
-PHP_FUNCTION(event_init)
+
+
+PHP_FUNCTION(event_base_new)
 {
-    current_base = event_init();
+	php_event_base *base;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "") != SUCCESS) {
+		return;
+	}
+
+	base = emalloc(sizeof(php_event_base));
+	base->base = event_base_new();
+	if (!base->base) {
+		efree(base);
+		RETURN_FALSE;
+	}
+
+	base->events = 0;
+
+	base->rsrc_id = zend_list_insert(base, le_event_base);
+	RETURN_RESOURCE(base->rsrc_id);
 }
+
+PHP_FUNCTION(event_base_free)
+{
+	zval *zbase;
+	php_event_base *base;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zbase) != SUCCESS) {
+		return;
+	}
+
+	ZVAL_TO_BASE(zbase, base);
+
+	if (base->events > 0) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "base has events attached to it and cannot be freed");
+		RETURN_FALSE;
+	}
+
+	zend_list_delete(base->rsrc_id);
+}
+
+PHP_FUNCTION(event_base_dispatch)
+{
+}
+
+PHP_FUNCTION(event_base_loop)
+{
+	zval *zbase;
+	php_event_base *base;
+	long flags = 0;
+	int ret;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r|l", &zbase, &flags) != SUCCESS) {
+		return;
+	}
+
+	ZVAL_TO_BASE(zbase, base);
+	zend_list_addref(base->rsrc_id); /* make sure the base cannot be destroyed during the loop */
+	ret = event_base_loop(base->base, flags);
+	zend_list_delete(base->rsrc_id);
+
+	RETURN_LONG(ret);
+}
+
+PHP_FUNCTION(event_base_loopbreak)
+{
+	zval *zbase;
+	php_event_base *base;
+	int ret;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r", &zbase) != SUCCESS) {
+		return;
+	}
+
+	ZVAL_TO_BASE(zbase, base);
+	ret = event_base_loopbreak(base->base);
+	if (ret == 0) {
+		RETURN_TRUE;
+	}
+	RETURN_FALSE;
+}
+
+PHP_FUNCTION(event_base_loopexit)
+{
+	zval *zbase;
+	php_event_base *base;
+	int ret;
+	long timeout = -1;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "r|l", &zbase, &timeout) != SUCCESS) {
+		return;
+	}
+
+	ZVAL_TO_BASE(zbase, base);
+
+	if (timeout < 0) {
+		ret = event_base_loopexit(base->base, NULL);
+	} else {
+		struct timeval time;
+		
+		time.tv_usec = timeout % 1000000;
+		time.tv_sec = timeout / 1000000;
+		ret = event_base_loopexit(base->base, &time);
+	}
+
+	if (ret == 0) {
+		RETURN_TRUE;
+	}
+	RETURN_FALSE;
+}
+
+PHP_FUNCTION(event_base_set)
+{
+	zval *zbase, *zevent;
+	php_event_base *base, *old_base;
+	php_event_t *event;
+	int ret;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rr", &zevent, &zbase) != SUCCESS) {
+		return;
+	}
+
+	ZVAL_TO_BASE(zbase, base);
+	ZVAL_TO_EVENT(zevent, event);
+
+	old_base = event->base;
+	ret = event_base_set(base->base, event->event);
+
+	if (ret == 0) {
+		if (base != old_base) {
+			/* make sure the base is destroyed after the event */
+			zend_list_addref(base->rsrc_id);
+			++base->events;
+		}
+
+		if (old_base) {
+			--old_base->events;
+			zend_list_delete(old_base->rsrc_id);
+		}
+
+		event->base = base;
+		RETURN_TRUE;
+	}
+	RETURN_FALSE;
+}
+
+PHP_FUNCTION(event_base_priority_init)
+{
+	zval *zbase;
+	php_event_base *base;
+	long npriorities;
+	int ret;
+
+	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rl", &zbase, &npriorities) != SUCCESS) {
+		return;
+	}
+
+	ZVAL_TO_BASE(zbase, base);
+
+	if (npriorities < 0) {
+		php_error_docref(NULL TSRMLS_CC, E_WARNING, "npriorities cannot be less than zero");
+		RETURN_FALSE;
+	}
+
+	ret = event_base_priority_init(base->base, npriorities);
+	if (ret == 0) {
+		RETURN_TRUE;
+	}
+	RETURN_FALSE;
+}
+
+
 
 PHP_FUNCTION(event_reinit)
 {
     event_reinit(current_base);
 }
 
-
-PHP_FUNCTION(event_dispatch)
-{
-    event_dispatch();
-}
-
-PHP_FUNCTION(event_loopbreak)
-{
-	if (event_loopbreak() == 0)
-	{
-		RETURN_TRUE;
-	}
-	else
-	{
-		RETURN_FALSE;
-	}
-}
 
 /*
  * Create an event struct and register it as resource
@@ -349,6 +522,17 @@ static void evhttp_response_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
     free(r);
 }
 
+/*
+ * Destructor for event_base resource
+ */
+
+static void event_base_dtor(zend_rsrc_list_entry *rsrc TSRMLS_DC)
+{
+	php_event_base *base = (php_event_base_t*)rsrc->ptr;
+
+	event_base_free(base->base);
+	free(base);
+}
 
 /*
  * Destructor for event resource
