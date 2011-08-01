@@ -263,7 +263,6 @@ PHP_MINFO_FUNCTION(event)
 /* }}} */
 
 
-
 PHP_FUNCTION(event_base_new)
 {
 	php_event_base *base;
@@ -294,7 +293,7 @@ PHP_FUNCTION(event_base_free)
 		return;
 	}
 
-	ZVAL_TO_BASE(zbase, base);
+	FETCH_EVENTBASE(zbase, base);
 
 	if (base->events > 0) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "base has events attached to it and cannot be freed");
@@ -319,7 +318,7 @@ PHP_FUNCTION(event_base_loop)
 		return;
 	}
 
-	ZVAL_TO_BASE(zbase, base);
+	FETCH_EVENTBASE(zbase, base);
 	zend_list_addref(base->rsrc_id); /* make sure the base cannot be destroyed during the loop */
 	ret = event_base_loop(base->base, flags);
 	zend_list_delete(base->rsrc_id);
@@ -337,7 +336,7 @@ PHP_FUNCTION(event_base_loopbreak)
 		return;
 	}
 
-	ZVAL_TO_BASE(zbase, base);
+	FETCH_EVENTBASE(zbase, base);
 	ret = event_base_loopbreak(base->base);
 	if (ret == 0) {
 		RETURN_TRUE;
@@ -356,7 +355,7 @@ PHP_FUNCTION(event_base_loopexit)
 		return;
 	}
 
-	ZVAL_TO_BASE(zbase, base);
+	FETCH_EVENTBASE(zbase, base);
 
 	if (timeout < 0) {
 		ret = event_base_loopexit(base->base, NULL);
@@ -378,32 +377,19 @@ PHP_FUNCTION(event_base_set)
 {
 	zval *zbase, *zevent;
 	php_event_base *base, *old_base;
-	php_event_t *event;
+	struct event *e;
 	int ret;
 
 	if (zend_parse_parameters(ZEND_NUM_ARGS() TSRMLS_CC, "rr", &zevent, &zbase) != SUCCESS) {
 		return;
 	}
 
-	ZVAL_TO_BASE(zbase, base);
-	ZVAL_TO_EVENT(zevent, event);
+	FETCH_EVENTBASE(zbase, base);
+	FETCH_EVENT(zevent, e);
 
-	old_base = event->base;
-	ret = event_base_set(base->base, event->event);
+	ret = event_base_set(base->base, e);
 
 	if (ret == 0) {
-		if (base != old_base) {
-			/* make sure the base is destroyed after the event */
-			zend_list_addref(base->rsrc_id);
-			++base->events;
-		}
-
-		if (old_base) {
-			--old_base->events;
-			zend_list_delete(old_base->rsrc_id);
-		}
-
-		event->base = base;
 		RETURN_TRUE;
 	}
 	RETURN_FALSE;
@@ -420,7 +406,7 @@ PHP_FUNCTION(event_base_priority_init)
 		return;
 	}
 
-	ZVAL_TO_BASE(zbase, base);
+	FETCH_EVENTBASE(zbase, base);
 
 	if (npriorities < 0) {
 		php_error_docref(NULL TSRMLS_CC, E_WARNING, "npriorities cannot be less than zero");

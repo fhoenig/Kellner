@@ -65,7 +65,6 @@ extern zend_module_entry event_module_entry;
 #define Z_SET_REFCOUNT_P(pz, rc)      (pz)->refcount = rc
 #endif
 
-
 PHP_MINIT_FUNCTION(event);
 PHP_MSHUTDOWN_FUNCTION(event);
 PHP_RINIT_FUNCTION(event);
@@ -272,6 +271,20 @@ typedef struct _evhttp_callback_arg
 	TSRMLS_D;
 #endif
 } evhttp_callback_arg;
+
+
+/* Resource Macros */
+#define FETCH_EVENTBASE(zval, base) \
+	ZEND_FETCH_RESOURCE(base, php_event_base *, &zval, -1, PHP_EVENT_BASE_RES_NAME, le_event_base)
+
+#define FETCH_EVENT(zval, ev) \
+	ZEND_FETCH_RESOURCE(ev, struct event*, &zval, -1, PHP_EVENT_RES_NAME, le_event)
+
+#define FETCH_BUFFEREVENT(zval, bevent) \
+	ZEND_FETCH_RESOURCE(bevent, php_bufferevent_t *, &zval, -1, PHP_EVBUFFER_RES_NAME, le_bufferevent)
+
+
+
 
 #endif	/* PHP_EVENT_H */
 
